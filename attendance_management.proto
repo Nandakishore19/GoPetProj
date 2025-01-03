@@ -1,0 +1,54 @@
+syntax = "proto3";
+option go_package = "petProj/src/protos";
+
+message Employee {
+    int32 employee_id = 1;
+    string email = 2;
+    string mac_address = 3;
+    string name = 4;
+}
+
+message DailyAttendanceLog {
+    uint32 attendance_id = 1;
+    int32 employee_id = 2;
+    string date = 3;
+    string first_logged_at = 4;
+    string last_logged_at = 5;
+}
+
+
+message AddEmployeeRequest {
+    int32 employee_id = 1;
+    string email =2;
+    string mac_address = 3;
+    string name = 4;
+}
+
+message AddEmployeeResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message GetEmployeeRequest {
+    repeated string mac_address = 1;
+}
+
+message GetEmployeeResponse {
+    repeated Employee employees = 1;
+}
+
+message EmployeeAttendanceRequest {
+    int32 employee_id = 1;
+}
+
+message EmployeeAttendanceResponse {
+    bool success = 1;
+    string message = 2;
+    DailyAttendanceLog attendance_log = 3;
+}
+
+service EmployeeService {
+    rpc AddEmployee(AddEmployeeRequest) returns (AddEmployeeResponse);
+    rpc GetEmployees(GetEmployeeRequest) returns (GetEmployeeResponse);
+    rpc LogEmployeeAttendance(EmployeeAttendanceRequest) returns (EmployeeAttendanceResponse);
+}
