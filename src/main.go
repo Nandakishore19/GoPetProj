@@ -1,77 +1,67 @@
 package main
 
 import (
-	// "fmt"
-	"log"
-	"petProj/src/repositories"
-
-	"google.golang.org/grpc"
-	// "time"
-	"petProj/src/attendanceProtos"
-	"petProj/src/server"
-	"net"
+	"bufio"
+	"fmt"
+	"os"
+	"regexp"
 )
+
+// "fmt"
+// "log"
+// "petProj/src/repositories"
+
+// "google.golang.org/grpc"
+// // "time"
+// "petProj/src/attendanceProtos"
+// "petProj/src/server"
+// "net"
+// "petProj/src/client"
 
 
 func main() {
-	db,err := repositories.NewDB()
+
+	bcFile, err := os.Open("bc.txt")
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		fmt.Println("Error opening file:", err)
+		return
 	}
-	l, err := net.Listen("tcp", ":8089")
+	defer bcFile.Close()
+	rpbcFile, err := os.Open("rpbc.txt")
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		fmt.Println("Error opening file:", err)
+		return
 	}
-	serverRegistrar := grpc.NewServer()
+	defer rpbcFile.Close()
 
-	employeeService := server.NewEmployeeServer(db)
+	macRegex := regexp.MustCompile(`([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})`)
 
-	protos.RegisterEmployeeServiceServer(serverRegistrar, employeeService)
+	extractedMacAddresses := []string{}
+	// Read the contents of the bc.txt file
+	scanner := bufio.NewScanner(bcFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		macAddresses := macRegex.FindAllString(line, -1)
 
-	err = serverRegistrar.Serve(l)
-	if err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		if len(macAddresses) > 0 {
+			extractedMacAddresses = append(extractedMacAddresses, macAddresses...)
+		}
 	}
-	// empRepo := repositories.NewEmployeeRepository(db)
-	// attendanceRepo := repositories.NewAttendanceRepository(db)
 
-	// employeesToAdd := []struct {
-	// 	id        int
-	// 	email     string
-	// 	macAddress string
-	// 	name      string
-	// }{
-	// 	{1, "nanda@kishore.com", "00:00:00:00:00:11", "Nanda"},
-	// 	{2, "kishore@kishore.com", "00:00:00:01:00:00", "Kishore"},
-	// 	{3, "kishore@nanda.com", "00:00:00:02:00:00", "Adnan"},
-	// }
+	// Read the contents of the rpbc.txt file
+	scanner = bufio.NewScanner(rpbcFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		macAddresses := macRegex.FindAllString(line, -1)
 
-	// for _, e := range employeesToAdd {
-	// 	if err = empRepo.AddEmployee(e.id, e.email, e.macAddress, e.name); err != nil {
-	// 		log.Fatalf("failed to add employee %s: %v", e.name, err)
-	// 	}
-	// }
-	// if err != nil {
-	// 	log.Fatalf("failed to add employee: %v", err)
-	// }
+		if len(macAddresses) > 0 {
+			extractedMacAddresses = append(extractedMacAddresses, macAddresses...)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
 
-	// log.Println("Employee added successfully")
-	// fmt.Println("Employee added successfully")
-
-	// employees, err := empRepo.GetEmployees([]string{"00:00:00:00:00:11", "00:00:00:01:00:00"})
-	// if err != nil {
-	// 	log.Fatalf("failed to get employees: %v", err)
-	// }
-	// for _, employee := range employees {
-	// 	log.Printf("Employee ID: %d, Email: %s, MAC Address: %s, Name: %s", employee.EmployeeID, employee.Email, employee.MacAddress, employee.Name)
-	// }
-
-	// EmployeeId := 1
-	// date := time.Now().Format("2006-01-02")
-	// err = attendanceRepo.LogEmployeeAttendance(EmployeeId, date)
-	// if err != nil {
-	// 	log.Fatalf("failed to log employee attendance: %v", err)
-	// }
-	// log.Println("Employee attendance logged successfully for employee ID:", EmployeeId)
-
+	fmt.Println("Extracted MAC addresses:", extractedMacAddresses)
 }
